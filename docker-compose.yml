@@ -1,0 +1,25 @@
+version: '3.0'
+services:
+  go:
+    image: h3poteto/golang:1.11.2
+    environment:
+      SLACK_TOKEN: $SLACK_TOKEN
+      DB_USER: root
+      DB_HOST: mysql
+    working_dir: /go/src/github.com/h3poteto/attendance_bot
+    links:
+      - mysql:mysql
+    volumes:
+      - .:/go/src/github.com/h3poteto/attendance_bot
+
+  mysql:
+    image: mysql:5.7
+    volumes:
+      - storage:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "true"
+
+volumes:
+  storage:
