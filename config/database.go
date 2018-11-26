@@ -18,7 +18,7 @@ func NewDB() *gorm.DB {
 	PROTOCOL := "tcp(" + host + ":" + port + ")"
 	DBNAME := os.Getenv("DB_NAME")
 
-	CONNECT := USER + ":" + PASS + "@" + PROTOCOL + "/" + DBNAME
+	CONNECT := USER + ":" + PASS + "@" + PROTOCOL + "/" + DBNAME + "?" + "parseTime=true"
 	db, err := gorm.Open(DBMS, CONNECT)
 
 	if err != nil {
