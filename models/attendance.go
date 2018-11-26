@@ -21,6 +21,11 @@ func StartAttendance(SlackID string) (*Attendance, error) {
 	if err != nil {
 		return nil, err
 	}
+	leaving := AlreadyLeaving(user)
+	if !leaving {
+		return nil, errors.New("Still working")
+	}
+
 	timestamp := time.Now()
 	attendance := &Attendance{
 		User:         *user,
@@ -33,4 +38,44 @@ func StartAttendance(SlackID string) (*Attendance, error) {
 		return nil, errors.New("Could not create attendance record.")
 	}
 	return attendance, nil
+}
+
+func FinishAttendance(SlackID string) (*Attendance, error) {
+	user, err := FindOrCreateUser(SlackID)
+	if err != nil {
+		return nil, err
+	}
+	attendance, err := FindLastAttendance(user)
+	if err != nil {
+		return nil, err
+	}
+	if attendance.LeavingAt != nil {
+		return nil, errors.New("Already leaving")
+	}
+	timestamp := time.Now()
+	attendance.LeavingAt = &timestamp
+	db := config.SharedDB()
+	db.Save(attendance)
+	return attendance, nil
+}
+
+func FindLastAttendance(user *User) (*Attendance, error) {
+	attendance := Attendance{}
+	db := config.SharedDB()
+	db.Where("user_id = ?", user.ID).Order("attendance_at desc").First(&attendance)
+	if attendance.ID == 0 {
+		return nil, errors.New("Could not find attendance.")
+	}
+	return &attendance, nil
+}
+
+func AlreadyLeaving(user *User) bool {
+	attendance, err := FindLastAttendance(user)
+	if err != nil {
+		return true
+	}
+	if attendance.LeavingAt == nil {
+		return false
+	}
+	return true
 }
